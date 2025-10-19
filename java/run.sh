@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -e
-mkdir -p out
-javac -d out src/ScheduleApp.java
+cd "$(dirname "$0")"
+javac -encoding UTF-8 -d out src/ScheduleApp.java
 java -cp out ScheduleApp
