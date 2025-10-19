@@ -12,8 +12,8 @@ MAX_DAYS_PER_EMP = 5       # company rule: an employee works at most 5 days/week
 SHIFT_CAP = 3              # a shift cannot exceed this capacity (you can tweak)
 RANDOM_SEED = 42           # seed for reproducibility
 
-# Toggle: set to False to enter employees + preferences manually
-USE_RANDOM_PREFS = True
+# Toggles
+USE_RANDOM_PREFS = True    # False = collect names & ranked prefs via CLI
 
 # ---------------- Data containers ----------------
 # schedule[day][shift] -> list of employee names assigned
@@ -25,7 +25,7 @@ worked_days = defaultdict(int)
 # assigned_today[day] -> set of names assigned on that day (enforce 1 shift/day)
 assigned_today = {d: set() for d in DAYS}
 
-# preferences[name][day] -> preferred shift (basic single-choice preference)
+# preferences[name][day] -> ranked list of shifts e.g. ["morning","evening","afternoon"]
 preferences = {}
 
 # ---------------- Core helpers ----------------
@@ -45,48 +45,49 @@ def assign(name, day, shift):
     worked_days[name] += 1
     return True
 
-def try_preferred(name, day):
-    pref = preferences.get(name, {}).get(day)
-    if pref is None:
-        return False
-    return assign(name, day, pref)
+def try_ranked(name, day):
+    """
+    Try ranked preferences in order: first -> second -> third.
+    """
+    ranks = preferences.get(name, {}).get(day, [])
+    for s in ranks:
+        if assign(name, day, s):
+            return True
+    return False
 
 def resolve_conflict_or_reassign(name, day):
     """
-    Try to place 'name' if preferred is unavailable:
-      1) other shifts on SAME day
-      2) preferred shift on NEXT day
-      3) other shifts on NEXT day
-    NOTE: respects 1 shift per day and 5-days/week rules automatically via assign().
+    If ranked prefs fail on the SAME day:
+      1) try any remaining shifts on SAME day (not already in ranks)
+      2) try ranked prefs on NEXT day
+      3) try any remaining shifts on NEXT day
     """
-    # --- same-day fallback (other shifts) ---
-    pref = preferences.get(name, {}).get(day)
+    ranks = preferences.get(name, {}).get(day, [])
+    # 1) other shifts same day
     for s in SHIFTS:
-        if s == pref:
+        if s in ranks:
             continue
         if assign(name, day, s):
             return True
 
-    # --- next-day fallback (stop at Sun; do not wrap to Mon) ---
+    # find next day (no wrap to Mon)
     try:
         idx = DAYS.index(day)
     except ValueError:
         return False
-
     if idx >= len(DAYS) - 1:
-        # day is Sun (no "next day" in this week)
         return False
-
     next_day = DAYS[idx + 1]
 
-    # 2a) preferred on next day (if any)
-    next_pref = preferences.get(name, {}).get(next_day)
-    if next_pref and assign(name, next_day, next_pref):
-        return True
+    # 2) ranked on next day
+    next_ranks = preferences.get(name, {}).get(next_day, [])
+    for s in next_ranks:
+        if assign(name, next_day, s):
+            return True
 
-    # 2b) any other shift on next day
+    # 3) any remaining on next day
     for s in SHIFTS:
-        if s == next_pref:
+        if s in next_ranks:
             continue
         if assign(name, next_day, s):
             return True
@@ -100,7 +101,7 @@ def fill_minimum_staff(day, all_emps):
         while len(schedule[day][s]) < MIN_PER_SHIFT:
             elig = [e for e in pool if (e not in assigned_today[day]) and (worked_days[e] < MAX_DAYS_PER_EMP)]
             if not elig:
-                break  # short-staffed; no one left to place
+                break
             pick = random.choice(elig)
             if assign(pick, day, s):
                 continue
@@ -113,24 +114,26 @@ def schedule_week(all_emps):
         for name in all_emps:
             if not can_assign(name, day):
                 continue
-            if try_preferred(name, day):
+            if try_ranked(name, day):
                 continue
             resolve_conflict_or_reassign(name, day)
         fill_minimum_staff(day, all_emps)
 
 # ---------------- Input modes ----------------
 def demo_seed_preferences():
-    """Random preferences for quick testing."""
+    """
+    Random ranked preferences (random permutation of the three shifts) for testing.
+    """
     emps = ["Alex", "Blair", "Casey", "Dev", "Eden", "Finn"]
     for e in emps:
-        preferences[e] = {day: random.choice(SHIFTS) for day in DAYS}
+        preferences[e] = {day: random.sample(SHIFTS, k=len(SHIFTS)) for day in DAYS}
     return emps
 
 def collect_prefs_from_input():
     """
-    Simple CLI input:
+    CLI ranked input:
       - ask for names (comma-separated)
-      - for each day, for each person, ask m/a/e (or full word)
+      - for each day, for each person, accept a ranking like: m>a>e or morning, evening, afternoon
     Press Enter at 'names' prompt to fall back to demo data.
     """
     raw = input("Enter employee names, comma-separated (or press Enter to use demo): ").strip()
@@ -139,26 +142,45 @@ def collect_prefs_from_input():
 
     emps = [x.strip() for x in raw.split(",") if x.strip()]
     print(f"\nGreat—captured {len(emps)} employees: {', '.join(emps)}")
-    print("Enter preference per day: m = morning, a = afternoon, e = evening")
-    print("(you can also type the full word). Example inputs: m / morning / A / evening\n")
+    print("Enter ranked preference per day, e.g.:  m>a>e   or   morning, evening, afternoon")
+    print("(choices: morning / afternoon / evening)\n")
 
-    def normalize(choice):
-        c = choice.strip().lower()
-        if c in ("m", "morning"): return "morning"
-        if c in ("a", "afternoon"): return "afternoon"
-        if c in ("e", "evening"): return "evening"
+    def normalize_token(tok):
+        t = tok.strip().lower()
+        if t in ("m", "morning"):   return "morning"
+        if t in ("a", "afternoon"): return "afternoon"
+        if t in ("e", "evening"):   return "evening"
         return None
+
+    def parse_ranked(s):
+        # support "m>a>e", "morning, evening, afternoon", "m a e"
+        if ">" in s:
+            parts = s.split(">")
+        elif "," in s:
+            parts = s.split(",")
+        else:
+            parts = s.split()
+        out = []
+        for p in parts:
+            val = normalize_token(p)
+            if val and val not in out:
+                out.append(val)
+        # ensure we always return a permutation of SHIFTS
+        for sh in SHIFTS:
+            if sh not in out:
+                out.append(sh)
+        return out
 
     for e in emps:
         preferences[e] = {}
         for d in DAYS:
             while True:
-                ans = input(f"{e} preference for {d} (m/a/e): ").strip()
-                norm = normalize(ans)
-                if norm:
-                    preferences[e][d] = norm
+                ans = input(f"{e} ranked preference for {d} (e.g., m>a>e): ").strip()
+                ranks = parse_ranked(ans)
+                if set(ranks) == set(SHIFTS) and len(ranks) == 3:
+                    preferences[e][d] = ranks
                     break
-                print("  Sorry, please enter m / a / e (or morning/afternoon/evening).")
+                print("  Please give a ranking including all three shifts (morning/afternoon/evening).")
         print()
     return emps
 
@@ -171,14 +193,12 @@ def pretty_print_schedule():
         print(f"\n{d}:")
         for s in SHIFTS:
             names = ", ".join(schedule[d][s]) if schedule[d][s] else "-"
-            # include count for quick read
             print(f"  {s:10s} ({len(schedule[d][s])}) -> {names}")
 
 def print_summary(all_emps):
     print("\n----------------------------")
     print("         Weekly Summary")
     print("----------------------------")
-    # Sort by most days worked
     items = sorted(worked_days.items(), key=lambda kv: (-kv[1], kv[0]))
     for name, days in items:
         print(f"{name:10s} : {days} day(s)")
