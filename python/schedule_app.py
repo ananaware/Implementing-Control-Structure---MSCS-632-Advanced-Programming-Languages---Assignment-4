@@ -52,12 +52,45 @@ def try_preferred(name, day):
     return assign(name, day, pref)
 
 def resolve_conflict_or_reassign(name, day):
+    """
+    Try to place 'name' if preferred is unavailable:
+      1) other shifts on SAME day
+      2) preferred shift on NEXT day
+      3) other shifts on NEXT day
+    NOTE: respects 1 shift per day and 5-days/week rules automatically via assign().
+    """
+    # --- same-day fallback (other shifts) ---
     pref = preferences.get(name, {}).get(day)
     for s in SHIFTS:
         if s == pref:
             continue
         if assign(name, day, s):
             return True
+
+    # --- next-day fallback (stop at Sun; do not wrap to Mon) ---
+    try:
+        idx = DAYS.index(day)
+    except ValueError:
+        return False
+
+    if idx >= len(DAYS) - 1:
+        # day is Sun (no "next day" in this week)
+        return False
+
+    next_day = DAYS[idx + 1]
+
+    # 2a) preferred on next day (if any)
+    next_pref = preferences.get(name, {}).get(next_day)
+    if next_pref and assign(name, next_day, next_pref):
+        return True
+
+    # 2b) any other shift on next day
+    for s in SHIFTS:
+        if s == next_pref:
+            continue
+        if assign(name, next_day, s):
+            return True
+
     return False
 
 def fill_minimum_staff(day, all_emps):
@@ -149,10 +182,8 @@ def print_summary(all_emps):
     items = sorted(worked_days.items(), key=lambda kv: (-kv[1], kv[0]))
     for name, days in items:
         print(f"{name:10s} : {days} day(s)")
-    # total assigned per day/shift
     total_assigned = sum(sum(len(schedule[d][s]) for s in SHIFTS) for d in DAYS)
     print(f"\nTotal assignments placed: {total_assigned}")
-    # find any short-staffed shifts (< MIN_PER_SHIFT)
     shortages = []
     for d in DAYS:
         for s in SHIFTS:
@@ -164,10 +195,8 @@ def print_summary(all_emps):
             print(f"  {d:3s} {s:10s} -> {c}/{MIN_PER_SHIFT}")
     else:
         print("\nAll shifts meet the minimum staffing requirement ✅")
+
 def export_schedule_csv(out_path):
-    """
-    Write schedule to a CSV with columns: Day, Shift, Count, Employees.
-    """
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     with open(out_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
@@ -178,9 +207,6 @@ def export_schedule_csv(out_path):
                 writer.writerow([d, s, len(names), ", ".join(names)])
 
 def export_summary_csv(out_path):
-    """
-    Write per-employee days worked to a CSV.
-    """
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     rows = sorted(worked_days.items(), key=lambda kv: (-kv[1], kv[0]))
     with open(out_path, "w", newline="", encoding="utf-8") as f:
@@ -189,9 +215,6 @@ def export_summary_csv(out_path):
         writer.writerows(rows)
 
 def export_markdown(out_path):
-    """
-    Write a GitHub-friendly Markdown file of the schedule for easy viewing in the repo.
-    """
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
     lines = []
     lines.append("# Final Weekly Schedule\n")
@@ -202,17 +225,14 @@ def export_markdown(out_path):
         for s in SHIFTS:
             names = schedule[d][s]
             lines.append(f"| {s} | {len(names)} | {', '.join(names) if names else '-'} |")
-        lines.append("")  # blank line
-
+        lines.append("")
     lines.append("\n## Weekly Summary\n")
     lines.append("| Employee | Days Worked |")
     lines.append("|----------|-------------|")
     for name, days in sorted(worked_days.items(), key=lambda kv: (-kv[1], kv[0])):
         lines.append(f"| {name} | {days} |")
-
     with open(out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
-
 
 # ---------------- Main ----------------
 if __name__ == "__main__":
@@ -221,20 +241,15 @@ if __name__ == "__main__":
         employees = demo_seed_preferences()
     else:
         employees = collect_prefs_from_input()
-
     schedule_week(employees)
     pretty_print_schedule()
     print_summary(employees)
-    # --- exports for your submission ---
-    base_dir = os.path.dirname(__file__)                        # /python
+    base_dir = os.path.dirname(__file__)
     docs_dir = os.path.normpath(os.path.join(base_dir, "..", "docs"))
-
     export_schedule_csv(os.path.join(docs_dir, "schedule.csv"))
     export_summary_csv(os.path.join(docs_dir, "summary.csv"))
     export_markdown(os.path.join(docs_dir, "schedule.md"))
-
     print("\nFiles written to /docs:")
     print(" - docs/schedule.csv")
     print(" - docs/summary.csv")
     print(" - docs/schedule.md")
-
