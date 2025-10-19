@@ -44,3 +44,18 @@ Optional GUI for input/output
 ##Reference
 
 Sebesta, R. (2016). Concepts of Programming Languages (12th ed.). Pearson Education.
+
+---
+
+## Bonus & Java Implementation
+
+- Added **ranked preference scheduling** with same-day and next-day fallback in both **Python** and **Java** versions.  
+- Python script (`python/schedule_app.py`) now supports 3-level ranked preferences per day.  
+- Java version (`java/src/ScheduleApp.java`) mirrors the Python logic using object-oriented structures.  
+- Exported results are automatically written to `/docs`:
+  - `schedule.csv`
+  - `summary.csv`
+  - `schedule.md`
+- Execution screenshots are stored in `/docs/screenshots/` for verification and grading.
+
+---
