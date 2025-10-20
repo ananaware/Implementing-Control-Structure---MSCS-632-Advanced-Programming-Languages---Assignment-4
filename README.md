@@ -1,4 +1,4 @@
-# MSCS 532 – Assignment 4: Implementing Control Structures (Employee Scheduling)
+# MSCS 632 – Assignment 4: Implementing Control Structures (Employee Scheduling)
 
 ## Overview
 This project demonstrates implementation of control structures (conditionals, loops, and branching) across two programming languages — **Python** and **Java**.  
@@ -18,16 +18,23 @@ Implementing-Control-Structure---MSCS-632-Advanced-Programming-Languages---Assig
 └─ docs/
 └─ screenshots/
 ```
+---
 ## How to Run
 
 ### Python
 ```bash
 cd python
 python schedule_app.py
+```
+
+### Java
+```bash
 cd java
 ./run.sh
 ```
-##Notes
+
+---
+## Notes
 
 Currently, both Python and Java versions print a test message confirming the environment works.
 
@@ -41,7 +48,7 @@ Weekly output formatting
 
 Optional GUI for input/output
 
-##Reference
+## Reference
 
 Sebesta, R. (2016). Concepts of Programming Languages (12th ed.). Pearson Education.
 
@@ -59,3 +66,30 @@ Sebesta, R. (2016). Concepts of Programming Languages (12th ed.). Pearson Educat
 - Execution screenshots are stored in `/docs/screenshots/` for verification and grading.
 
 ---
+
+---
+
+## Environment
+- Python 3.10+ (standard library only; no external packages)
+- Java 17+ (tested with OpenJDK)
+- OS: Windows (Git Bash / Notepad), should work similarly on macOS/Linux
+
+## Notes
+- Python supports **ranked preferences** per day. Toggle input mode in `python/schedule_app.py`:
+  - `USE_RANDOM_PREFS=True`  → quick demo (seeded)
+  - `USE_RANDOM_PREFS=False` → manual CLI (enter names + daily rankings: `m>a>e`)
+- Exports are written to `docs/`: `schedule.md`, `schedule.csv`, `summary.csv`.
+- Screenshots of final outputs are stored in `docs/screenshots/`.
+
+## Java Run Notes
+- The script `java/run.sh` compiles the Java program and runs it automatically.
+- It builds the compiled files under `java/out` and executes `ScheduleApp`.
+- To run manually:
+  ```bash
+  cd java
+  javac -d out src/ScheduleApp.java
+  java -cp out ScheduleApp
+  ```
+
+
+
