@@ -1,19 +1,19 @@
 Day,Shift,Count,Employees
 Mon,morning,3,"Blair, Eden, Finn"
-Mon,afternoon,0,
-Mon,evening,3,"Alex, Casey, Dev"
-Tue,morning,2,"Alex, Finn"
-Tue,afternoon,1,Casey
-Tue,evening,3,"Blair, Dev, Eden"
-Wed,morning,3,"Alex, Blair, Casey"
-Wed,afternoon,2,"Dev, Eden"
-Wed,evening,1,Finn
-Thu,morning,2,"Casey, Eden"
-Thu,afternoon,1,Finn
-Thu,evening,3,"Alex, Blair, Dev"
-Fri,morning,2,"Casey, Dev"
-Fri,afternoon,3,"Alex, Eden, Finn"
-Fri,evening,1,Blair
+Mon,afternoon,2,"Casey, Dev"
+Mon,evening,1,Alex
+Tue,morning,3,"Blair, Eden, Finn"
+Tue,afternoon,0,
+Tue,evening,3,"Alex, Casey, Dev"
+Wed,morning,2,"Alex, Finn"
+Wed,afternoon,1,Blair
+Wed,evening,3,"Casey, Dev, Eden"
+Thu,morning,2,"Blair, Dev"
+Thu,afternoon,2,"Eden, Finn"
+Thu,evening,2,"Alex, Casey"
+Fri,morning,3,"Alex, Blair, Casey"
+Fri,afternoon,1,Dev
+Fri,evening,2,"Eden, Finn"
 Sat,morning,0,
 Sat,afternoon,0,
 Sat,evening,0,

@@ -5,40 +5,40 @@
 | Shift | Count | Employees |
 |------:|:-----:|-----------|
 | morning | 3 | Blair, Eden, Finn |
-| afternoon | 0 | - |
-| evening | 3 | Alex, Casey, Dev |
+| afternoon | 2 | Casey, Dev |
+| evening | 1 | Alex |
 
 ## Tue
 
 | Shift | Count | Employees |
 |------:|:-----:|-----------|
-| morning | 2 | Alex, Finn |
-| afternoon | 1 | Casey |
-| evening | 3 | Blair, Dev, Eden |
+| morning | 3 | Blair, Eden, Finn |
+| afternoon | 0 | - |
+| evening | 3 | Alex, Casey, Dev |
 
 ## Wed
 
 | Shift | Count | Employees |
 |------:|:-----:|-----------|
-| morning | 3 | Alex, Blair, Casey |
-| afternoon | 2 | Dev, Eden |
-| evening | 1 | Finn |
+| morning | 2 | Alex, Finn |
+| afternoon | 1 | Blair |
+| evening | 3 | Casey, Dev, Eden |
 
 ## Thu
 
 | Shift | Count | Employees |
 |------:|:-----:|-----------|
-| morning | 2 | Casey, Eden |
-| afternoon | 1 | Finn |
-| evening | 3 | Alex, Blair, Dev |
+| morning | 2 | Blair, Dev |
+| afternoon | 2 | Eden, Finn |
+| evening | 2 | Alex, Casey |
 
 ## Fri
 
 | Shift | Count | Employees |
 |------:|:-----:|-----------|
-| morning | 2 | Casey, Dev |
-| afternoon | 3 | Alex, Eden, Finn |
-| evening | 1 | Blair |
+| morning | 3 | Alex, Blair, Casey |
+| afternoon | 1 | Dev |
+| evening | 2 | Eden, Finn |
 
 ## Sat
 
